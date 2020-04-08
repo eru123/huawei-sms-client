@@ -1,0 +1,28 @@
+{
+  "name": "huawei-sms-client",
+  "version": "1.0.0",
+  "description": "Huawei SMS Client designed for Pocket Wifi",
+  "main": "index.js",
+  "scripts": {
+    "test": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eru123/huawei-sms-client.git"
+  },
+  "keywords": [
+    "sms",
+    "sms-client",
+    "huawei",
+    "pocket-wifi-client"
+  ],
+  "author": "Eru Roraito",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/eru123/huawei-sms-client/issues"
+  },
+  "homepage": "https://github.com/eru123/huawei-sms-client#readme",
+  "dependencies": {
+    "http": "0.0.1-security"
+  }
+}

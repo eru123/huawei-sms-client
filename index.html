@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset='utf-8'>
+  	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<title>SMS CLIENT</title>
+	<link rel="stylesheet" type="text/css" href="css/all.min.css">
+	<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="css/sweetalert2.min.css">
+	<link rel="stylesheet" type="text/css" href="css/style.css">
+	<script type="text/javascript" src="js/all.min.js"></script>
+	<script type="text/javascript" src="js/vue.min.js"></script>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/popper.min.js"></script>
+	<script type="text/javascript" src="js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="js/sweetalert2.all.min.js"></script>
+	<script type="text/javascript" src="lib.js"></script>
+	
+</head>
+<body>
+<div id="app">
+	<div v-if="loading" class="loader-container">
+		<div class="loader"></div>
+	</div>
+	<div v-if="login">
+		<nav class="navbar bg-dark navbar-dark sticky-top">
+			<a class="navbar-brand ucwords" href="#" style="flex: 1">{{page}}</a>
+		    <ul class="navbar-nav flex-row">
+		     	<li class="nav-item ml-4">
+		        	<a class="nav-link" href="#" @click="page = 'create message'">Create Message</a>
+		     	</li>
+		     	<li class="nav-item ml-4">
+		        	<a class="nav-link" href="#" @click="page = 'inbox'">Inbox <small v-if="status.unread > 0"><span class="badge badge-secondary font-weight-light">{{status.unread}}</span></small></a>
+		     	</li>
+		     	<li class="nav-item ml-4">
+		        	<a class="nav-link" href="#" @click="page = 'wifi information'">Wifi Information</a>
+		     	</li>
+		     	<li class="nav-item ml-4">
+		        	<a class="nav-link" href="#" @click="page = 'about'">About</a>
+		     	</li>
+		    </ul>
+		</nav>
+		
+		<div v-if="page == 'inbox'">
+			<div v-if="inboxSmsRead.visible" class="app-modal">
+				<div v-if="inboxSmsRead.reply" class="create-message">
+					<div class="create-message-container card py-2 px-4">
+						<h5 class="font-weight-light">Reply to</h5>
+						<div>
+							<small>To</small>
+							<div class="pl-2">{{inboxSmsRead.data.sender}}</div>
+							<small>Message</small>
+							<textarea placeholder="Text here ..." rows="4" class="form-control mb-3" id="rmmsg"></textarea>
+							<div class="text-right">
+								<button class="btn btn-dark btn-sm" @click="inboxSmsSendReply(inboxSmsRead.data.sender)">Send</button>
+								<button class="btn btn-dark btn-sm ml-2" @click="inboxSmsRead.reply = false">Cancel</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div v-else class="app-modal-container card">
+					<div class="card-header p-2">
+						<b>{{inboxSmsRead.data.sender}}</b><br><small>{{inboxSmsRead.data.date}}</small>
+					</div>
+					<div class="card-body">
+						{{inboxSmsRead.data.content}}
+					</div>
+					<div class="card-footer text-right">
+						<button class="btn btn-sm btn-dark ml-2" @click="inboxSmsRead.reply = true">Reply</button>
+						<button class="btn btn-sm btn-dark ml-2" @click="inboxSmsDelete(inboxSmsRead.data.id)">Delete</button>
+						<button class="btn btn-sm btn-dark ml-2" @click="inboxSmsRead.visible = false">Back</button>
+					</div>
+				</div>
+			</div>
+			<div v-if="inbox.length" class="msg-container">
+				<div v-for="msg in inbox" @click="inboxRead(msg.id)">
+					<div v-if="msg.read" class="msg">
+						<div class="icon">
+							<i class="far fa-envelope-open"></i>
+						</div>
+						<div class="container">
+							<div>{{msg.sender}} <small style="color: gray;">{{msg.date}}</small></div>
+							<div>{{msg.content.substr(0,27)}} ...</div>
+						</div>
+					</div>
+					<div v-else class="msg">
+						<div class="icon">
+							<i class="fa fa-envelope"></i>
+						</div>
+						<div class="container">
+							<div>{{msg.sender}} <small style="color: gray;">{{msg.date}}</small></div>
+							<div>{{msg.content.substr(0,27)}} ...</div>
+						</div>
+					</div>
+				</div>
+				
+			</div>
+			<div v-else class="py-3 container">
+				No Record
+			</div>
+		</div>
+		<div v-else-if="page == 'create message'" class="create-message">
+			<div class="create-message-container card py-2 px-4">
+				<h5 class="font-weight-light">Create Message</h5>
+				<div>
+					<small>To</small>
+					<input class="form-control mb-2" type="number" placeholder="+63" v-model="cmto">
+					<small>Message</small>
+					<textarea placeholder="Text here ..." rows="4" class="form-control mb-3" id="cmmsg"></textarea>
+					<div class="text-right">
+						<button class="btn btn-dark btn-sm" @click="inboxSmsSend">Send</button>
+						<button class="btn btn-dark btn-sm ml-2" @click="page = 'inbox'">Cancel</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div v-else-if="page == 'wifi information'" class="container pt-4">
+			<div class="mb-2">
+				<small><b>SSID</b></small>
+				<div class="pl-2">{{status.ssid || "N/A"}}</div>
+			</div>
+			<div class="mb-2">
+				<small><b>Network</b></small>
+				<div class="pl-2">{{status.network || "N/A"}}</div>
+			</div>
+			<div class="mb-2">
+				<small><b>My Number</b></small>
+				<div class="pl-2">{{status.my_number || "N/A"}}</div>
+			</div>
+			<div class="mb-2">
+				<small><b>Battery</b></small>
+				<div class="pl-2">{{status.battery || "0"}}%</div>
+			</div>
+			<div class="mb-2">
+				<small><b>Signal Strength</b></small>
+				<div class="pl-2">{{status.signal || "N/A"}}</div>
+			</div>
+			<div class="mb-2">
+				<small><b>Wireless LAN Users</b></small>
+				<div class="pl-2">{{status.wlan_users || "N/A"}}</div>
+			</div>
+			<div class="mb-2">
+				<small><b>WAN IP</b></small>
+				<div class="pl-2">{{status.wan_ip || "N/A"}}</div>
+			</div>
+			<div class="mb-2">
+				<small><b>Primary DNS</b></small>
+				<div class="pl-2">{{status.prim_dns || "N/A"}}</div>
+			</div>
+			<div class="mb-5">
+				<small><b>Traffic Statistics</b></small>
+				<div class="pl-2">Current Session Time : {{(status.traffic_tim/60).toFixed(2) || "0"}} <small>Minutes</small></div>
+				<div class="pl-2">Current Session Upload : {{(status.traffic_cup/1024/1024).toFixed(2) || "0"}} <small>MB</small></div>
+				<div class="pl-2">Current Session Download : {{(status.traffic_cdl/1024/1024).toFixed(2) || "0"}} <small>MB</small></div>
+				<div class="pl-2">Total Upload : {{(status.traffic_tup/1024/1024).toFixed(2) || "0"}} <small>MB</small></div>
+				<div class="pl-2">Total Download : {{(status.traffic_tdl/1024/1024).toFixed(2) || "0"}} <small>MB</small></div>
+			</div>
+		</div>
+		<div v-else-if="page == 'about'" class="container">
+			<div class="my-3">
+                <h1 class="display-4">SMS Client <br> <small><small>Version {{version}}</small></small> </h1>
+                <p>Portable SMS Client to Manage Huawei Wifi/Router SMS using Desktop Computer</p>
+
+                <div class="mt-4">
+                  Consider supporting us on <br>
+                  <span class="fab fa-facebook-square mr-2"></span> facebook.com/w3mart <br>
+                  <span class="fab fa-github mr-2"></span> github.com/eru123
+                </div>
+
+                <div class="mt-4">
+                  Author<br>
+                  <span class="fa fa-user-edit mr-2"></span> Jericho Aquino
+                </div>
+
+                <div class="mt-4">
+                  Contact us on<br>
+                  <span class="fab fa-google-plus-g mr-2"></span> yeoligoakino@gmail.com
+                </div>
+             </div>
+		</div>
+		<div v-else class="container">
+			<h3 class="font-weight-light">ERROR</h3>
+			Please try this to fix the problem
+			<ul>
+				<li>Make sure the Wifi/Router is connected</li>
+				<li>Make sure that the Wifi IP Address is 192.168.8.1</li>
+				<li>Make sure that Username and Password are correct</li>
+				<li>If the Username or Password is changed using different application/client please restart the application</li>
+				<li>Reboot the Wifi/Router then restart the application</li>
+			</ul>
+		</div>
+	</div>
+	<div v-else>
+		<div v-if="retry" class="container">
+			<h3 class="font-weight-light">Failed to run the application</h3>
+			Please try this to fix the problem
+			<ul>
+				<li>Make sure the Wifi/Router is connected</li>
+				<li>Make sure that the Wifi IP Address is 192.168.8.1</li>
+				<li>Make sure that Username and Password are correct</li>
+				<li>If the Username or Password is changed using different application/client please restart the application</li>
+				<li>Reboot the Wifi/Router then restart the application</li>
+			</ul>
+		</div>
+		<div v-else class="container mt-4" style="max-width: 450px;">
+			<h1 class="display-4 ucwords">login</h1>
+			<div>
+				<small>Username</small>
+				<input class="form-control mb-3" type="text" id="user">
+				<small>Password</small>
+				<input class="form-control mb-3" type="password" id="pass">
+				<div class="text-right">
+					<button class="btn btn-dark" id="loginBtn">Login</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+var state = false;
+var inbox = [];
+var login_count = 0;
+var app = new Vue({
+	el : "#app",
+	data : {
+		version : "1.0.0 - Production",
+		cmto : "",
+		loading : false,
+		retry : false,
+		login : false,
+		page : 'inbox',
+		inboxLi : "",
+		inbox : [],
+		inboxSmsRead : {
+			visible : false,
+			reply : false,
+			data : [],
+			updating : false
+		},
+		status : {
+			ssid : "",
+			my_number : "",
+			wan_ip : "",
+			wlan_users : "",
+			signal : "",
+			prim_dns: "",
+			battery: "",
+			traffic_cup : "",
+			traffic_cdl : "",
+			traffic_tup : "",
+			traffic_tdl : "",
+			traffic_tim : "",
+			inbox : "0/0",
+			unread : 0,
+			country : "",
+			network : ""
+		}
+	}
+})
+
+
+var lbtn = document.getElementById('loginBtn');
+lbtn.addEventListener('click',function(){
+	app._data.loading = true;
+	var luser = document.getElementById('user').value;
+	var lpass = document.getElementById('pass').value;
+	wifiLogin(luser,lpass,function(response){
+		if (wifiLoginState() == true) {
+			var user = luser;
+			var pass = lpass;
+			app._data.login = true;
+			setInterval(function(){
+				state = wifiLoginState();
+				if (state != true) {
+					if (user != null && user.length > 0 && pass != null && pass.length > 0 && login_count <= 2) {
+						wifiLogin(user,pass,null);
+						login_count++;
+						if (login_count == 2 && app._data.login == true) {
+							app._data.loading = false;
+							app._data.retry = true;
+						}
+					}
+					app._data.login = false;
+				} else if (state == true) {
+					login_count = 0;
+					app._data.login = true;
+					inbox = wifiSmsList();
+					if (inbox.length > 0) {
+						if (inbox[0].id != app._data.inboxLi) {
+							app._data.inbox = inbox;
+							var sound = new Audio();
+							sound.src = "clearly.mp3";
+							sound.play();
+						} /*else if (app._data.inboxSmsRead.updating == true) {
+							app._data.inbox = inbox;
+							app._data.inboxSmsRead.updating = false;
+						}*/
+						app._data.inboxLi = inbox[0].id;
+					}
+					updateWifiStatus();
+				}
+
+			},1500);
+		}
+	});
+	app._data.loading = false;
+});
+
+
+</script>
+<script type="text/javascript" src="main.js"></script>
+</body>
+</html>
