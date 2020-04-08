@@ -1,4 +1,4 @@
-# Huawuie SMS Client
+# Huawei SMS Client
 Portable SMS Client to Manage Huawei Wifi/Router SMS using Desktop Computer
 ## Requirements
 * Node.js
