@@ -1,3 +1,6 @@
+# [DISCONTINUED]
+This Project is discontinued due to lack of access on the required resources 
+
 # Huawei SMS Client
 Portable SMS Client to Manage Huawei Wifi/Router SMS using Desktop Computer
 ## Requirements
